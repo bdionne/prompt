@@ -1,6 +1,5 @@
 package org.protege.editor.owl.client.diff.ui;
 
-import java.awt.BorderLayout;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -15,34 +14,22 @@ import org.protege.editor.owl.client.diff.model.LogDiffListener;
 import org.protege.editor.owl.client.diff.model.LogDiffManager;
 import org.protege.editor.owl.model.hierarchy.OWLObjectHierarchyProvider;
 import org.protege.editor.owl.ui.tree.UserRendering;
-import org.protege.editor.owl.ui.view.AbstractOWLViewComponent;
 import org.protege.editor.owl.ui.view.cls.AbstractOWLClassHierarchyViewComponent;
 import org.semanticweb.owlapi.model.IRI;
-import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLObject;
-import org.semanticweb.owlapi.model.OWLOntology;
-import org.semanticweb.owlapi.model.OWLOntologyChange;
 
-public class TreeView extends AbstractOWLClassHierarchyViewComponent /*AbstractOWLViewComponent*/ {
+public class TreeView extends AbstractOWLClassHierarchyViewComponent {
 
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = 3417030023003101000L;
-	//private TreePanel treePanel;
 	private LogDiffManager diffManager;
 	private LogDiff diff;
 	
 	public TreeView() {}
-
-    /*@Override
-    protected void initialiseOWLView() throws Exception {
-        setLayout(new BorderLayout());
-        treePanel = new TreePanel(getOWLModelManager(), getOWLEditorKit());
-        add(treePanel, BorderLayout.CENTER);
-    }*/
 
     @Override
     public void disposeView() {
@@ -59,11 +46,9 @@ public class TreeView extends AbstractOWLClassHierarchyViewComponent /*AbstractO
 	private LogDiffListener diffListener = new LogDiffListener() {
 		@Override
 		public void statusChanged(LogDiffEvent event) {
-			// TODO Auto-generated method stub
 			if(event.equals(LogDiffEvent.COMMIT_SELECTION_CHANGED)) {
                 diffManager.clearSelectedChanges();
-                updateDiff(event);
-                
+                updateDiff(event);                
             } else {
             	
             }
@@ -74,8 +59,6 @@ public class TreeView extends AbstractOWLClassHierarchyViewComponent /*AbstractO
     	if(diff.getChanges().isEmpty()) {
             diff.initDiff();
         }
-    	CommitMetadata metadata = diffManager.getSelectedCommit();
-        //this.getTree().setSelectedOWLObject(metadata.getClass());
     	List<Change> changesToDisplay = diff.getChangesToDisplay(event);
         Collections.sort(changesToDisplay);
         for ( Change changeToDisplay : changesToDisplay ) {
@@ -100,7 +83,6 @@ public class TreeView extends AbstractOWLClassHierarchyViewComponent /*AbstractO
     
 	@Override
 	protected UserRendering getUserRenderer() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

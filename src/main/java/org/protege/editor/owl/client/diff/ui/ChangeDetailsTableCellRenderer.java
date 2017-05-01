@@ -14,7 +14,11 @@ import java.awt.*;
  * Stanford Center for Biomedical Informatics Research
  */
 public class ChangeDetailsTableCellRenderer extends LogDiffCellRenderer {
-    private OWLModelManager modelManager;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private OWLModelManager modelManager;
 
     /**
      * Constructor
@@ -31,28 +35,18 @@ public class ChangeDetailsTableCellRenderer extends LogDiffCellRenderer {
         ChangeMode mode = LogDiff.getChangeMode((OWLOntologyChange)value);
         if (value instanceof OWLAxiomChange) {
             OWLAxiom ax = ((OWLAxiomChange)value).getAxiom();
-            //JComponent c = (JComponent) owlCellRenderer.getTableCellRendererComponent(table, ax, isSelected, hasFocus, row, column);
-            //setBackground(table, mode, c, isSelected);
             setText(modelManager.getRendering(ax));
             setToolTipText(modelManager.getRendering(ax));
-            //c.setToolTipText(modelManager.getRendering(ax));     
-            //return c;
         }
         else if(value instanceof AnnotationChange) {
             OWLAxiom ax = getAnnotationAssertionAxiom((AnnotationChange) value);
-            //JComponent c = (JComponent) owlCellRenderer.getTableCellRendererComponent(table, ax, isSelected, hasFocus, row, column);
-            //setBackground(table, mode, c, isSelected);
             setText(modelManager.getRendering(ax));
             setToolTipText(modelManager.getRendering(ax));
-            //return c;
         }
         else if(value instanceof ImportChange) {
             OWLImportsDeclaration decl = ((ImportChange)value).getImportDeclaration();
-            //JComponent c = (JComponent) owlCellRenderer.getTableCellRendererComponent(table, decl.getIRI(), isSelected, hasFocus, row, column);
-            //setBackground(table, mode, c, isSelected);
             setText(modelManager.getRendering(decl.getIRI()));
             setToolTipText(modelManager.getRendering(decl.getIRI()));
-            //return c;
         }
         else if(value instanceof SetOntologyID) {
             IRI newIri = ((SetOntologyID)value).getNewOntologyID().getOntologyIRI().get();
