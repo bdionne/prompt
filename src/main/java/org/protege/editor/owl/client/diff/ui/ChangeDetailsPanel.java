@@ -7,7 +7,18 @@ import org.protege.editor.owl.model.OWLModelManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
+
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -75,12 +86,148 @@ public class ChangeDetailsPanel extends JPanel implements Disposable {
         else {
             tableModel = new MultipleChangeDetailsTableModel();
         }
-        tableModel.setChange(change);
+        
         ChangeDetailsTable table = new ChangeDetailsTable(tableModel, editorKit);
+        
+        ColumnListener cl = new ColumnListener(){
+
+            @Override
+            public void columnMoved(int oldLocation, int newLocation) {
+            	
+            }
+
+            @Override
+            public void columnResized(int column, int newWidth) {
+            	TableColumn c = table.getColumnModel().getColumn(column);
+                updateRowHeights(column, c.getWidth(), table);
+            }
+
+        };
+
+        table.getColumnModel().addColumnModelListener(cl);
+        table.getTableHeader().addMouseListener(cl);
+		table.getModel().addTableModelListener(new TableModelListener() {
+
+			public void tableChanged(TableModelEvent e) {
+				EventQueue.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						int columnCount = table.getColumnModel().getColumnCount();
+						for (int i = 0; i < columnCount; i++) {
+							TableColumn c = table.getColumnModel().getColumn(i);
+							updateRowHeights(i, c.getWidth(), table);
+						}
+					}
+
+				});
+
+			}
+		});
+        
+        tableModel.setChange(change);
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.setBorder(GuiUtils.EMPTY_BORDER);
         add(scrollPane, BorderLayout.CENTER);
+    }
+    
+	public static void updateRowHeights(int column, int width, JTable table){
+	    for (int row = 0; row < table.getRowCount(); row++) {
+	        int rowHeight = table.getRowHeight();
+	        Component comp = table.prepareRenderer(table.getCellRenderer(row, column), row, column);
+	        Dimension d = comp.getPreferredSize();
+	        comp.setSize(new Dimension(width, d.height));
+	        d = comp.getPreferredSize();
+	        rowHeight = Math.max(rowHeight, d.height);
+	        table.setRowHeight(row, rowHeight);
+	    }
+	}
+    abstract class ColumnListener extends MouseAdapter implements TableColumnModelListener {
+
+        private int oldIndex = -1;
+        private int newIndex = -1;
+        private boolean dragging = false;
+
+        private boolean resizing = false;
+        private int resizingColumn = -1;
+        private int oldWidth = -1;
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            // capture start of resize
+            if(e.getSource() instanceof JTableHeader) {
+                JTableHeader header = (JTableHeader)e.getSource();
+                TableColumn tc = header.getResizingColumn();
+                if(tc != null) {
+                    resizing = true;
+                    JTable table = header.getTable();
+                    resizingColumn = table.convertColumnIndexToView( tc.getModelIndex());
+                    oldWidth = tc.getPreferredWidth();
+                } else {
+                    resizingColumn = -1;
+                    oldWidth = -1;
+                }
+            }   
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            // column moved
+            if(dragging && oldIndex != newIndex) {
+                columnMoved(oldIndex, newIndex);
+            }
+            dragging = false;
+            oldIndex = -1;
+            newIndex = -1;
+
+            // column resized
+            if(resizing) {
+                if(e.getSource() instanceof JTableHeader) {
+                    JTableHeader header = (JTableHeader)e.getSource();
+                    TableColumn tc = header.getColumnModel().getColumn(resizingColumn);
+                    if(tc != null) {
+                        int newWidth = tc.getPreferredWidth();
+                        if(newWidth != oldWidth) {
+                            columnResized(resizingColumn, newWidth);
+                        }
+                    }
+                }   
+            }
+            resizing = false;
+            resizingColumn = -1;
+            oldWidth = -1;
+        }
+
+        @Override
+        public void columnAdded(TableColumnModelEvent e) {      
+        }
+
+        @Override
+        public void columnRemoved(TableColumnModelEvent e) {        
+        }
+
+        @Override
+        public void columnMoved(TableColumnModelEvent e) {
+            // capture dragging
+            dragging = true;
+            if(oldIndex == -1){
+                oldIndex = e.getFromIndex();
+            }
+
+            newIndex = e.getToIndex();  
+                 
+        }
+
+        @Override
+        public void columnMarginChanged(ChangeEvent e) {
+        }
+
+        @Override
+        public void columnSelectionChanged(ListSelectionEvent e) {
+        }
+
+        public abstract void columnMoved(int oldLocation, int newLocation);
+        public abstract void columnResized(int column, int newWidth);
     }
 
     @SuppressWarnings("unused") // rpc

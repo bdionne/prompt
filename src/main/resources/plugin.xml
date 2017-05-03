@@ -13,7 +13,16 @@
 		<defaultViewConfigFileName value="viewconfig-diff.xml"/>
 	</extension>
 
+
 	<!-- Diff Views -->
+	
+	<extension id="TreeView"
+			   point="org.protege.editor.core.application.ViewComponent">
+		<label value="Tree"/>
+		<class value="org.protege.editor.owl.client.diff.ui.TreeView"/>
+		<headerColor value="@org.protege.ontologycolor"/>
+		<category value="Revision History"/>
+	</extension>
 
 	<extension id="ChangesView"
 			   point="org.protege.editor.core.application.ViewComponent">
@@ -64,9 +73,6 @@
 	</extension>
 
 	
-
-	<!-- Menu items -->
 	
-    
 
 </plugin>
