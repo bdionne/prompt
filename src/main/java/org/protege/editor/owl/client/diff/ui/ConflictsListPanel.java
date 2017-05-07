@@ -126,7 +126,7 @@ public class ConflictsListPanel extends JPanel implements Disposable {
     }
 
     private void createConflictsPanel(JPanel panel, Set<Change> changes, GridBagConstraints con) {
-        Map<CommitMetadata, Set<OWLOntologyChange>> map = new HashMap<>();
+        Map<CommitMetadata, Set<OWLOntologyChange>> map = new TreeMap<>(new ChangeCommitDateCompare(false));
         for (Change change : changes) {
             CommitMetadata metadata = change.getCommitMetadata();
             if (map.containsKey(metadata)) {
