@@ -310,6 +310,11 @@ public class LogDiff {
     public Change getChange(ChangeId changeId) {
         return changeMap.get(changeId);
     }
+    
+    public List<Change> getChangesForCommit(CommitMetadata metadata) {        
+        Collection<ChangeId> dateChangeIds = changesByDate.get(metadata.getDate());        
+        return getChangesForCommit(metadata, dateChangeIds);
+    }
 
     /**
      * Get a list of changes (within the given change collection) that occurred in the specified commit
