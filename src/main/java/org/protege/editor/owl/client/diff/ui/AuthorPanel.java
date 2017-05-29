@@ -92,11 +92,6 @@ public class AuthorPanel extends JPanel implements Disposable {
                 } else {
                 	Integer c_cnt = user_cnts.get(user).get(0);
                 	user_cnts.get(user).set(0, c_cnt + 1);
-                	
-                	//Integer conflict_cnt = user_cnts.get(user).get(1);
-                	//userCountList.add(c_cnt + 1);
-                	//userCountList.add(conflict_cnt);
-                	//user_cnts.put(user, userCountList);
                 }
             }
             Collections.sort(users);

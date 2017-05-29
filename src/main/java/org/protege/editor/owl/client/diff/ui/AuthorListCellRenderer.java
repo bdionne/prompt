@@ -44,7 +44,6 @@ public class AuthorListCellRenderer extends DefaultListCellRenderer {
         int conflictCount = countList.size() > 1? countList.get(1) : 0;
         if (conflictCount > 0) {
 	        JLabel conflictLabel = new JLabel();
-	        //conflictLabel.setBorder(new EmptyBorder(7, 3, 23, 3));
 	        conflictLabel.setBorder(new EmptyBorder(20, 7, 23, 20));
 	        conflictLabel.setIcon(GuiUtils.getIcon(GuiUtils.WARNING_ICON_FILENAME, 23, 23));
 	        conflictLabel.setIconTextGap(7);
@@ -53,10 +52,6 @@ public class AuthorListCellRenderer extends DefaultListCellRenderer {
 	        }
 	        conflictLabel.setForeground(Color.red);
 	        conflictLabel.setText("(" + conflictCount + ")");
-	        //conflictLabel.setBackground(Color.WHITE);
-	        //conflictLabel.setText("<html><strong><font color='red'>" + c.getAuthor() + "(" + c.getConflictCount() + ")" +
-	                //"</font></strong></html>");
-	        
 	        panel.add(conflictLabel);
         }
         return panel;
