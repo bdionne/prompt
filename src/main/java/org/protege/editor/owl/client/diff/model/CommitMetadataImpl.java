@@ -17,6 +17,7 @@ public final class CommitMetadataImpl implements CommitMetadata {
     private final Date date;
     private final String comment;
     private final int conflictCount;
+    private final String conflictAuthor;
 
     /**
      * Constructor
@@ -32,14 +33,16 @@ public final class CommitMetadataImpl implements CommitMetadata {
         this.date = checkNotNull(date);
         this.comment = checkNotNull(comment);
         this.conflictCount = 0;
+        this.conflictAuthor = "";
     }
     
-    public CommitMetadataImpl(CommitId commitId, String userId, Date date, String comment, int conflictCount) {
+    public CommitMetadataImpl(CommitId commitId, String userId, Date date, String comment, int conflictCount, String conflictAuthor) {
         this.commitId = checkNotNull(commitId);
         this.userId = checkNotNull(userId);
         this.date = checkNotNull(date);
         this.comment = checkNotNull(comment);
         this.conflictCount = conflictCount;
+        this.conflictAuthor = conflictAuthor;
     }
 
     @Override
@@ -65,6 +68,11 @@ public final class CommitMetadataImpl implements CommitMetadata {
     @Override
     public int getConflictCount() {
     	return conflictCount;
+    }
+    
+    @Override
+    public String getConflictAuthor() {
+    	return conflictAuthor;
     }
     
     @Override

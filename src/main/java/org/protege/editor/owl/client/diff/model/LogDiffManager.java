@@ -37,17 +37,22 @@ public class LogDiffManager implements Disposable {
     private OWLEditorKit editorKit;
     private String selectedAuthor;
     
-    private HashMap<String, Integer> user_cnts = new HashMap<String, Integer>();
+    private HashMap<String, List<Integer>> user_cnts = new HashMap<String, List<Integer>>();
     
-    public void setUserCounts(HashMap<String, Integer> cnts) { user_cnts = cnts; }
+    public void setUserCounts(HashMap<String, List<Integer>> cnts) { user_cnts = cnts; }
     
-    public Integer getCount(String user) { 
+    public List<Integer> getCount(String user) { 
     	if (user.equals(ALL_AUTHORS)) {
     		Integer count = 0;
+    		Integer conflictCount = 0;
     		for (String us : user_cnts.keySet()) {
-    			count += user_cnts.get(us);    			
+    			count += user_cnts.get(us).get(0);
+    			conflictCount += user_cnts.get(us).get(1);
     		}
-    		return count;
+    		List<Integer> countList = new ArrayList<Integer>();
+    		countList.add(count);
+    		countList.add(conflictCount);
+    		return countList;
     	} else {
     		return user_cnts.get(user); }
     	}

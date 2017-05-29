@@ -39,7 +39,7 @@ public class CommitListCellRenderer extends DefaultListCellRenderer {
 	        conflictLabel.setIcon(GuiUtils.getIcon(GuiUtils.WARNING_ICON_FILENAME, 23, 23));
 	        conflictLabel.setIconTextGap(6);
 	        conflictLabel.setBackground(Color.WHITE);
-	        conflictLabel.setText("<html><strong><font color='red'>" + "(" + c.getConflictCount() + ")" +
+	        conflictLabel.setText("<html><strong><font color='red'>" + c.getConflictAuthor() + "(" + c.getConflictCount() + ")" +
 	                "</font></strong></html>");
 	        
 	        panel.add(conflictLabel);

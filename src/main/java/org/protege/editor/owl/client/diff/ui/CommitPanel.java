@@ -3,6 +3,7 @@ package org.protege.editor.owl.client.diff.ui;
 import org.protege.editor.core.Disposable;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.client.diff.model.Change;
+import org.protege.editor.owl.client.diff.model.ChangeId;
 import org.protege.editor.owl.client.diff.model.CommitMetadata;
 import org.protege.editor.owl.client.diff.model.CommitMetadataImpl;
 import org.protege.editor.owl.client.diff.model.LogDiff;
@@ -16,6 +17,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Rafael Gonçalves <br>
@@ -78,14 +80,26 @@ public class CommitPanel extends JPanel implements Disposable {
             
             for(CommitMetadata metadata : diffManager.getCommits(event)) {
             	int conflictCount = 0;
+            	List<String> conflictAuthors = new ArrayList<String>();
             	List<Change> changes = diff.getChangesForCommit(metadata);
             	for(Change change : changes) {
             		if(change.isConflicting()) {
             			conflictCount++;
+            			Set<ChangeId> conflictChanges = change.getConflictingChanges();
+            			for (ChangeId changeId : conflictChanges) {
+            				Change conflictChange = diffManager.getDiffEngine().getChange(changeId);
+            				String conflictAuthor = conflictChange.getCommitMetadata().getAuthor();
+            				if (!conflictAuthors.contains(conflictAuthor)) {
+            					conflictAuthors.add(conflictAuthor);
+            				}
+            			}
             		}
             	}
+            	
+            	
+            	
             	CommitMetadata newMetadata = new CommitMetadataImpl(metadata.getCommitId(), metadata.getAuthor(), metadata.getDate(),
-            			metadata.getComment(), conflictCount);
+            			metadata.getComment(), conflictCount, conflictAuthors.toString());
             	commits.add(newMetadata);
             }
             
