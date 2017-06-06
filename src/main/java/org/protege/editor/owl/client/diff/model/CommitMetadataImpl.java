@@ -16,6 +16,8 @@ public final class CommitMetadataImpl implements CommitMetadata {
     private final String userId;
     private final Date date;
     private final String comment;
+    private final int conflictCount;
+    private final String conflictAuthor;
 
     /**
      * Constructor
@@ -30,6 +32,17 @@ public final class CommitMetadataImpl implements CommitMetadata {
         this.userId = checkNotNull(userId);
         this.date = checkNotNull(date);
         this.comment = checkNotNull(comment);
+        this.conflictCount = 0;
+        this.conflictAuthor = "";
+    }
+    
+    public CommitMetadataImpl(CommitId commitId, String userId, Date date, String comment, int conflictCount, String conflictAuthor) {
+        this.commitId = checkNotNull(commitId);
+        this.userId = checkNotNull(userId);
+        this.date = checkNotNull(date);
+        this.comment = checkNotNull(comment);
+        this.conflictCount = conflictCount;
+        this.conflictAuthor = conflictAuthor;
     }
 
     @Override
@@ -53,6 +66,16 @@ public final class CommitMetadataImpl implements CommitMetadata {
     }
 
     @Override
+    public int getConflictCount() {
+    	return conflictCount;
+    }
+    
+    @Override
+    public String getConflictAuthor() {
+    	return conflictAuthor;
+    }
+    
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -60,21 +83,24 @@ public final class CommitMetadataImpl implements CommitMetadata {
         return Objects.equal(commitId, commit.commitId) &&
                 Objects.equal(userId, commit.userId) &&
                 Objects.equal(date, commit.date) &&
-                Objects.equal(comment, commit.comment);
+                Objects.equal(comment, commit.comment)&&
+                Objects.equal(conflictCount, commit.conflictCount);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(commitId, userId, date, comment);
+        return Objects.hashCode(commitId, userId, date, comment, conflictCount);
     }
 
     @Override
     public String toString() {
+    	
         return MoreObjects.toStringHelper(this)
                 .add("commitId", commitId)
                 .add("userId", userId)
                 .add("date", date)
                 .add("comment", comment)
+                .add((conflictCount>0 ? "conflict" : ""), (conflictCount>0 ? conflictCount : ""))
                 .toString();
     }
 

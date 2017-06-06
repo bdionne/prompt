@@ -35,5 +35,9 @@ public interface CommitMetadata extends Comparable<CommitMetadata> {
      * @return Commit comment
      */
     String getComment();
+    
+    int getConflictCount();
+    
+    String getConflictAuthor();
 
 }

@@ -2,6 +2,8 @@ package org.protege.editor.owl.client.diff.ui;
 
 import org.protege.editor.core.Disposable;
 import org.protege.editor.owl.OWLEditorKit;
+import org.protege.editor.owl.client.diff.model.Change;
+import org.protege.editor.owl.client.diff.model.LogDiff;
 import org.protege.editor.owl.client.diff.model.LogDiffEvent;
 import org.protege.editor.owl.client.diff.model.LogDiffListener;
 import org.protege.editor.owl.client.diff.model.LogDiffManager;
@@ -26,6 +28,7 @@ import java.util.List;
 public class AuthorPanel extends JPanel implements Disposable {
     private static final long serialVersionUID = 8377485189413724504L;
     private LogDiffManager diffManager;
+    private LogDiff diff;
     private JList<String> authorsList = new JList<>();
 
     /**
@@ -37,6 +40,7 @@ public class AuthorPanel extends JPanel implements Disposable {
     public AuthorPanel(OWLModelManager modelManager, OWLEditorKit editorKit) {
         diffManager = LogDiffManager.get(modelManager, editorKit);
         diffManager.addListener(diffListener);
+        diff = diffManager.getDiffEngine();
         setLayout(new BorderLayout(20, 20));
         setupList();
 
@@ -54,7 +58,8 @@ public class AuthorPanel extends JPanel implements Disposable {
     };
 
     private LogDiffListener diffListener = event -> {
-        if (event.equals(LogDiffEvent.ONTOLOGY_UPDATED) || event.equals(LogDiffEvent.COMMIT_OCCURRED)) {
+        if (event.equals(LogDiffEvent.ONTOLOGY_UPDATED) || event.equals(LogDiffEvent.COMMIT_OCCURRED) || 
+        		event.equals(LogDiffEvent.CHANGE_SELECTION_CHANGED)) {
             listAuthors();
         }
     };
@@ -77,12 +82,16 @@ public class AuthorPanel extends JPanel implements Disposable {
             for (DocumentRevision rev = base.next(); rev.behindOrSameAs(head); rev = rev.next()) {
                 RevisionMetadata metaData = changes.getMetadataForRevision(rev);
                 String user = metaData.getAuthorId();
+                
+                List<Integer> userCountList = new ArrayList<Integer>();
                 if (!users.contains(user)) {
                     users.add(user);
-                    user_cnts.put(user, 1);
+                    userCountList.add(1);
+                    userCountList.add(getConflictCountForUser(user));
+                    user_cnts.put(user, userCountList);
                 } else {
-                	Integer c_cnt = user_cnts.get(user);
-                	user_cnts.put(user, c_cnt + 1);
+                	Integer c_cnt = user_cnts.get(user).get(0);
+                	user_cnts.get(user).set(0, c_cnt + 1);
                 }
             }
             Collections.sort(users);
@@ -99,7 +108,18 @@ public class AuthorPanel extends JPanel implements Disposable {
         }
     }
     
-    private HashMap<String, Integer> user_cnts = new HashMap<String, Integer>();
+    private int getConflictCountForUser(String user) {
+    	List<Change> userChanges = diff.getChangesForUser(user);
+        int conflictCount = 0;
+        for (Change userChange : userChanges) {
+        	if (userChange.isConflicting()) {
+        		conflictCount++;
+        	}
+        }
+    	return conflictCount;
+    }
+    
+    private HashMap<String, List<Integer>> user_cnts = new HashMap<String, List<Integer>>();
 
     @Override
     public void dispose() {

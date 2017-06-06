@@ -36,18 +36,24 @@ public class LogDiffManager implements Disposable {
     private OWLModelManager modelManager;
     private OWLEditorKit editorKit;
     private String selectedAuthor;
+    private boolean allComplexEditChangesSelected = true;
     
-    private HashMap<String, Integer> user_cnts = new HashMap<String, Integer>();
+    private HashMap<String, List<Integer>> user_cnts = new HashMap<String, List<Integer>>();
     
-    public void setUserCounts(HashMap<String, Integer> cnts) { user_cnts = cnts; }
+    public void setUserCounts(HashMap<String, List<Integer>> cnts) { user_cnts = cnts; }
     
-    public Integer getCount(String user) { 
+    public List<Integer> getCount(String user) { 
     	if (user.equals(ALL_AUTHORS)) {
     		Integer count = 0;
+    		Integer conflictCount = 0;
     		for (String us : user_cnts.keySet()) {
-    			count += user_cnts.get(us);    			
+    			count += user_cnts.get(us).get(0);
+    			conflictCount += user_cnts.get(us).get(1);
     		}
-    		return count;
+    		List<Integer> countList = new ArrayList<Integer>();
+    		countList.add(count);
+    		countList.add(conflictCount);
+    		return countList;
     	} else {
     		return user_cnts.get(user); }
     	}
@@ -157,8 +163,16 @@ public class LogDiffManager implements Disposable {
         this.selectedCommit = selectedCommit;
         statusChanged(LogDiffEvent.COMMIT_SELECTION_CHANGED);
     }
+    
+    public boolean isAllComplexEditChangesSelected() {
+		return allComplexEditChangesSelected;
+	}
 
-    public List<CommitMetadata> getCommits(LogDiffEvent event) {
+	public void setAllComplexEditChangesSelected(boolean allComplexEditChangesSelected) {
+		this.allComplexEditChangesSelected = allComplexEditChangesSelected;
+	}
+
+	public List<CommitMetadata> getCommits(LogDiffEvent event) {
         VersionedOWLOntology vont = getVersionedOntologyDocument().get();
         ChangeHistory changes = vont.getChangeHistory();
         DocumentRevision base = changes.getBaseRevision();

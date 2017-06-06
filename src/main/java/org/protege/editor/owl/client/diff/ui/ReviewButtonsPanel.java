@@ -92,11 +92,11 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
         @Override
         public void statusChanged(LogDiffEvent event) {
             if(event.equals(LogDiffEvent.CHANGE_SELECTION_CHANGED)) {
-                if(!diffManager.getSelectedChanges().isEmpty()) {
-                    enable(true, clearBtn, rejectBtn);
+                if(!diffManager.getSelectedChanges().isEmpty() && diffManager.isAllComplexEditChangesSelected()) {
+                    enable(true, clearBtn, rejectBtn, commitBtn);
                 }
                 else {
-                    enable(false, clearBtn, rejectBtn);
+                    enable(false, clearBtn, rejectBtn, commitBtn);
                 }
             }
             if(event.equals(LogDiffEvent.CHANGE_REVIEWED) || event.equals(LogDiffEvent.ONTOLOGY_UPDATED)) {
