@@ -52,11 +52,30 @@ public class ChangesPanel extends JPanel implements Disposable {
             return;
         }
         ListSelectionModel lsm = (ListSelectionModel)e.getSource();
+        Change complexEditChange = null;
         if (!lsm.isSelectionEmpty()) {
             List<Change> selectedChanges = new ArrayList<>();
-            for(int i = 0; i < table.getSelectedRowCount(); i++) {
+            int selectedRowCount = table.getSelectedRowCount();
+            int selectedComplexEditCount = 0;
+            for(int i = 0; i < selectedRowCount; i++) {
                 Change change = diffTableModel.getChange(table.convertRowIndexToModel(table.getSelectedRows()[i]));
                 selectedChanges.add(change);
+                String comment = change.getCommitMetadata().getComment();
+                if (comment.endsWith(" - SPLIT") || comment.endsWith(" - MERGE") || comment.endsWith(" - RETIRE")) {
+                	complexEditChange = change;
+                	selectedComplexEditCount++;
+                }
+                		
+            }
+            if (complexEditChange != null) {
+            	List<Change> changes = diffManager.getDiffEngine().getChangesForCommit(complexEditChange.getCommitMetadata());
+            	if (changes != null && changes.size() != selectedComplexEditCount) {
+            		diffManager.setAllComplexEditChangesSelected(false);
+            	} else {
+            		diffManager.setAllComplexEditChangesSelected(true);
+            	}
+            } else {
+            	diffManager.setAllComplexEditChangesSelected(true);
             }
             diffManager.setSelectedChanges(selectedChanges);
         }
