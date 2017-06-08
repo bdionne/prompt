@@ -1,6 +1,7 @@
 package org.protege.editor.owl.client.diff.ui;
 
 import edu.stanford.protege.metaproject.api.AuthToken;
+import edu.stanford.protege.metaproject.api.ProjectId;
 import org.protege.editor.core.Disposable;
 import org.protege.editor.core.ui.error.ErrorLogPanel;
 import org.protege.editor.owl.OWLEditorKit;
@@ -14,14 +15,20 @@ import org.protege.editor.owl.client.diff.model.*;
 import org.protege.editor.owl.client.event.CommitOperationEvent;
 import org.protege.editor.owl.client.ui.UserLoginPanel;
 import org.protege.editor.owl.model.OWLModelManager;
+import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.server.api.CommitBundle;
+import org.protege.editor.owl.client.api.exception.ClientRequestException;
 import org.protege.editor.owl.server.policy.CommitBundleImpl;
 import org.protege.editor.owl.server.versioning.Commit;
+import org.protege.editor.owl.server.versioning.api.ServerDocument;
 import org.protege.editor.owl.server.versioning.api.ChangeHistory;
 import org.protege.editor.owl.server.versioning.api.DocumentRevision;
 import org.protege.editor.owl.server.versioning.api.RevisionMetadata;
 import org.protege.editor.owl.server.versioning.api.VersionedOWLOntology;
+import org.protege.editor.owl.server.util.SnapShot;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.protege.editor.owl.ui.util.ProgressDialog;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +37,11 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
+import com.google.common.util.concurrent.*;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -42,8 +53,10 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
     private LogDiffManager diffManager;
     private ReviewManager reviewManager;
     private OWLEditorKit editorKit;
-    private JButton rejectBtn, clearBtn, commitBtn, downloadBtn, conceptHistoryBtn;
+    private JButton rejectBtn, clearBtn, commitBtn, squashHistoryBtn, conceptHistoryBtn;
     private boolean read_only = false;
+    private final ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+    private ProgressDialog dlg = new ProgressDialog();
 
     /**
      * Constructor
@@ -71,8 +84,8 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
         commitBtn = getButton("Commit", commitBtnListener);
         commitBtn.setToolTipText("Commit all change reviews");
 
-        downloadBtn = getButton("Download", downloadBtnListener);
-        downloadBtn.setToolTipText("Download the ontology without custom Protégé annotations");
+        squashHistoryBtn = getButton("Squash History", squashHistoryBtnListener);
+        squashHistoryBtn.setToolTipText("Squash and Archive history on server");
         
         conceptHistoryBtn = getButton("History", conceptHistoryBtnListener);
         conceptHistoryBtn.setToolTipText("Push the concept history to the server");
@@ -80,10 +93,10 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setPreferredSize(new Dimension(20, 0));
 
-        add(rejectBtn); add(clearBtn); add(separator); add(commitBtn); add(downloadBtn);
+        add(rejectBtn); add(clearBtn); add(separator); add(commitBtn); add(squashHistoryBtn);
         add(conceptHistoryBtn);
         diffManager.addListener(changeSelectionListener);
-        enable(true, downloadBtn);
+        enable(true, squashHistoryBtn);
         enable(true, conceptHistoryBtn);
         
     }
@@ -130,16 +143,47 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
         }
     };
 
-    private ActionListener downloadBtnListener = new ActionListener() {
+    private ActionListener squashHistoryBtnListener = new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) {
-            List<OWLOntologyChange> changes = diffManager.removeCustomAnnotations();
+        public void actionPerformed(ActionEvent _e) {
+            ClientSession clientSession = ClientSession.getInstance(editorKit);
+            SnapShot snapshot = new SnapShot(clientSession.getActiveVersionOntology().getOntology());
+            ProjectId projectId = clientSession.getActiveProject();
+            LocalHttpClient client = (LocalHttpClient) clientSession.getActiveClient();
+
+            dlg.setMessage("Squashing history.");
+
+            ListenableFuture<Boolean> squashFuture = service.submit(
+                    new Callable<Boolean>() {
+                        public Boolean call() {
+                            try {
+                                client.squashHistory(snapshot, projectId);
+
+                                ServerDocument serverDocument = client.openProject(projectId);
+                                VersionedOWLOntology vont = client.buildVersionedOntology(
+                                serverDocument, OWLManager.createOWLOntologyManager(), projectId);
+
+                                clientSession.setActiveProject(projectId, vont);
+                                editorKit.getModelManager().fireEvent(EventType.ACTIVE_ONTOLOGY_CHANGED);
+                                dlg.setVisible(false);
+                                return Boolean.TRUE;
+                            }
+                            catch (ClientRequestException | AuthorizationException e) {
+                                dlg.setVisible(false);
+                                return Boolean.FALSE;
+                            }
+                        }});
+            dlg.setVisible(true);
+
             try {
-                editorKit.handleSaveAs();
-            } catch (Exception e1) {
-                e1.printStackTrace();
+                if (squashFuture.get()) {
+                    info("History squashed and archived on server.");
+                } else {
+                    warn("Unable to squash history.");
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                warn("Unable to squash history." + e);
             }
-            diffManager.addCustomAnnotations(changes);
         }
     };
     
@@ -155,10 +199,11 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
     
     private ActionListener conceptHistoryBtnListener = new ActionListener() {
         @Override
-        public void actionPerformed(ActionEvent e) { 
+        public void actionPerformed(ActionEvent e) {
+        	ClientSession sess = ClientSession.getInstance(editorKit);
         	try {
-        		if (((LocalHttpClient) ClientSession.getInstance(editorKit).getActiveClient()).isWorkFlowManager()) {
-        			((LocalHttpClient) ClientSession.getInstance(editorKit).getActiveClient()).genConceptHistory();
+        		if (((LocalHttpClient) sess.getActiveClient()).isWorkFlowManager(sess.getActiveProject())) {
+        			((LocalHttpClient) sess.getActiveClient()).genConceptHistory(sess.getActiveProject());
         			info("Concept history recorded on server.");
                 } else {
                 	warn("Only Workflow Managers can generate history.");
@@ -274,7 +319,7 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
         rejectBtn.removeActionListener(rejectBtnListener);
         clearBtn.removeActionListener(clearBtnListener);
         commitBtn.removeActionListener(commitBtnListener);
-        downloadBtn.removeActionListener(downloadBtnListener);
+        squashHistoryBtn.removeActionListener(squashHistoryBtnListener);
         diffManager.removeListener(changeSelectionListener);
     }
 }
