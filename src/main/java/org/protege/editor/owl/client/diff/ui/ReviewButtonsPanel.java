@@ -159,7 +159,7 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
                             try {
                                 client.squashHistory(snapshot, projectId);
 
-                                ServerDocument serverDocument = client.openProject(projectId);
+                                ServerDocument serverDocument = client.openProject(projectId).serverDocument;
                                 VersionedOWLOntology vont = client.buildVersionedOntology(
                                 serverDocument, OWLManager.createOWLOntologyManager(), projectId);
 
