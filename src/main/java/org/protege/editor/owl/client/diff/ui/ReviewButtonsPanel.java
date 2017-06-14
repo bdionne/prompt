@@ -7,6 +7,7 @@ import org.protege.editor.core.ui.error.ErrorLogPanel;
 import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.client.ClientSession;
 import org.protege.editor.owl.client.LocalHttpClient;
+import org.protege.editor.owl.client.SessionRecorder;
 import org.protege.editor.owl.client.api.Client;
 import org.protege.editor.owl.client.api.exception.AuthorizationException;
 import org.protege.editor.owl.client.api.exception.ClientRequestException;
@@ -27,6 +28,7 @@ import org.protege.editor.owl.server.versioning.api.RevisionMetadata;
 import org.protege.editor.owl.server.versioning.api.VersionedOWLOntology;
 import org.protege.editor.owl.server.util.SnapShot;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.protege.editor.owl.ui.util.ProgressDialog;
 
@@ -150,6 +152,8 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
             SnapShot snapshot = new SnapShot(clientSession.getActiveVersionOntology().getOntology());
             ProjectId projectId = clientSession.getActiveProject();
             LocalHttpClient client = (LocalHttpClient) clientSession.getActiveClient();
+            
+            OWLOntologyManager manager = clientSession.getActiveVersionOntology().getOntology().getOWLOntologyManager();
 
             dlg.setMessage("Squashing history.");
 
@@ -157,18 +161,14 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
                     new Callable<Boolean>() {
                         public Boolean call() {
                             try {
+                            	
                                 client.squashHistory(snapshot, projectId);
 
-                                ServerDocument serverDocument = client.openProject(projectId).serverDocument;
-                                VersionedOWLOntology vont = client.buildVersionedOntology(
-                                serverDocument, OWLManager.createOWLOntologyManager(), projectId);
-
-                                clientSession.setActiveProject(projectId, vont);
-                                editorKit.getModelManager().fireEvent(EventType.ACTIVE_ONTOLOGY_CHANGED);
+                                
                                 dlg.setVisible(false);
                                 return Boolean.TRUE;
                             }
-                            catch (ClientRequestException | AuthorizationException e) {
+                            catch (ClientRequestException e) {
                                 dlg.setVisible(false);
                                 return Boolean.FALSE;
                             }
@@ -177,13 +177,32 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
 
             try {
                 if (squashFuture.get()) {
-                    info("History squashed and archived on server.");
+                    info("History squashed and archived on server, resetting ontology");
+                    
+                    SessionRecorder.getInstance(editorKit).stopRecording();
+                    
+                    clientSession.reset();                    
+                    
+                    ServerDocument serverDocument = client.openProject(projectId).serverDocument;
+                    VersionedOWLOntology vont = client.buildVersionedOntology(
+                    serverDocument, manager, projectId);
+
+                    clientSession.setActiveProject(projectId, vont);
+                    
+                    SessionRecorder.getInstance(editorKit).startRecording();
+                    
+                    // ClientSession.setActiveProject also fires an event, so this isn't needed?
+                    //editorKit.getModelManager().fireEvent(EventType.ACTIVE_ONTOLOGY_CHANGED);
+                    
                 } else {
                     warn("Unable to squash history.");
                 }
             } catch (InterruptedException | ExecutionException e) {
                 warn("Unable to squash history." + e);
-            }
+            } catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
     };
     
