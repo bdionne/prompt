@@ -161,10 +161,8 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
                     new Callable<Boolean>() {
                         public Boolean call() {
                             try {
-                            	
                                 client.squashHistory(snapshot, projectId);
 
-                                
                                 dlg.setVisible(false);
                                 return Boolean.TRUE;
                             }
@@ -178,31 +176,24 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
             try {
                 if (squashFuture.get()) {
                     info("History squashed and archived on server, resetting ontology");
-                    
+
                     SessionRecorder.getInstance(editorKit).stopRecording();
-                    
+
                     clientSession.reset();                    
-                    
+
                     ServerDocument serverDocument = client.openProject(projectId).serverDocument;
                     VersionedOWLOntology vont = client.buildVersionedOntology(
                     serverDocument, manager, projectId);
 
                     clientSession.setActiveProject(projectId, vont);
-                    
-                    SessionRecorder.getInstance(editorKit).startRecording();
-                    
-                    // ClientSession.setActiveProject also fires an event, so this isn't needed?
-                    //editorKit.getModelManager().fireEvent(EventType.ACTIVE_ONTOLOGY_CHANGED);
-                    
                 } else {
                     warn("Unable to squash history.");
                 }
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException | ExecutionException | ClientRequestException | AuthorizationException e) {
                 warn("Unable to squash history." + e);
-            } catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+            } finally {
+                SessionRecorder.getInstance(editorKit).startRecording();
+            }
         }
     };
     
