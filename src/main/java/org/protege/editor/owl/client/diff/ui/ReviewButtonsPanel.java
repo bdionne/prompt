@@ -180,19 +180,30 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
                     SessionRecorder.getInstance(editorKit).stopRecording();
 
                     clientSession.reset();                    
-
-                    ServerDocument serverDocument = client.openProject(projectId).serverDocument;
-                    VersionedOWLOntology vont = client.buildVersionedOntology(
-                    serverDocument, manager, projectId);
-
-                    clientSession.setActiveProject(projectId, vont);
+                    
+                    try {
+						ServerDocument serverDocument = client.openProject(projectId).serverDocument;
+						VersionedOWLOntology vont = client.buildVersionedOntology(
+			                    serverDocument, manager, projectId);
+						clientSession.setActiveProject(projectId, vont);
+					} catch (AuthorizationException | ClientRequestException e) {
+						throw new ExecutionException(e);
+					}  
+					
+                    SessionRecorder.getInstance(editorKit).startRecording();
+                    
+                    // ClientSession.setActiveProject also fires an event, so this isn't needed?
+                    //editorKit.getModelManager().fireEvent(EventType.ACTIVE_ONTOLOGY_CHANGED);
+                    
                 } else {
                     warn("Unable to squash history.");
                 }
-            } catch (InterruptedException | ExecutionException | ClientRequestException | AuthorizationException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 warn("Unable to squash history." + e);
+
             } finally {
                 SessionRecorder.getInstance(editorKit).startRecording();
+
             }
         }
     };
