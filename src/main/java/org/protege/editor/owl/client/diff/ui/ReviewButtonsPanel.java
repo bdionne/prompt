@@ -16,9 +16,7 @@ import org.protege.editor.owl.client.diff.model.*;
 import org.protege.editor.owl.client.event.CommitOperationEvent;
 import org.protege.editor.owl.client.ui.UserLoginPanel;
 import org.protege.editor.owl.model.OWLModelManager;
-import org.protege.editor.owl.model.event.EventType;
 import org.protege.editor.owl.server.api.CommitBundle;
-import org.protege.editor.owl.client.api.exception.ClientRequestException;
 import org.protege.editor.owl.server.policy.CommitBundleImpl;
 import org.protege.editor.owl.server.versioning.Commit;
 import org.protege.editor.owl.server.versioning.api.ServerDocument;
@@ -29,7 +27,6 @@ import org.protege.editor.owl.server.versioning.api.VersionedOWLOntology;
 import org.protege.editor.owl.server.util.SnapShot;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
-import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.protege.editor.owl.ui.util.ProgressDialog;
 
 import javax.swing.*;
@@ -44,6 +41,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 import com.google.common.util.concurrent.*;
+
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -55,7 +53,7 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
     private LogDiffManager diffManager;
     private ReviewManager reviewManager;
     private OWLEditorKit editorKit;
-    private JButton rejectBtn, clearBtn, commitBtn, squashHistoryBtn, conceptHistoryBtn;
+    private JButton rejectBtn, clearBtn, commitBtn, squashHistoryBtn, conceptHistoryBtn, restartPelletBtn;
     private boolean read_only = false;
     private final ListeningExecutorService service = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
     private ProgressDialog dlg = new ProgressDialog();
@@ -92,15 +90,24 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
         conceptHistoryBtn = getButton("History", conceptHistoryBtnListener);
         conceptHistoryBtn.setToolTipText("Push the concept history to the server");
 
+        restartPelletBtn = getButton("Restart Pellet", restartPelletBtnListener);
+
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setPreferredSize(new Dimension(20, 0));
 
         add(rejectBtn); add(clearBtn); add(separator); add(commitBtn); add(squashHistoryBtn);
         add(conceptHistoryBtn);
+        add(restartPelletBtn);
         diffManager.addListener(changeSelectionListener);
         enable(true, squashHistoryBtn);
         enable(true, conceptHistoryBtn);
-        
+
+        boolean isWorkflowManager = false;
+        ClientSession sess = ClientSession.getInstance(editorKit);
+        try {
+            ((LocalHttpClient) sess.getActiveClient()).isWorkFlowManager(sess.getActiveProject());
+        } catch (Exception e) { } // session and client can be null when this view is created
+        enable(isWorkflowManager, restartPelletBtn);
     }
 
     private LogDiffListener changeSelectionListener = new LogDiffListener() {
@@ -244,7 +251,20 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
         	 
         }
     };
-    
+
+    private ActionListener restartPelletBtnListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+            ClientSession sess = ClientSession.getInstance(editorKit);
+            LocalHttpClient client = (LocalHttpClient) sess.getActiveClient();
+
+            if (!client.isWorkFlowManager(sess.getActiveProject())) return;
+
+            // TODO: implement this
+//            pelletService.restart();
+        }
+    };
+
     public List<String> getCommitComments() {
         VersionedOWLOntology vont = ClientSession.getInstance(editorKit).getActiveVersionOntology();
         ChangeHistory changes = vont.getChangeHistory();
@@ -341,6 +361,7 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
         clearBtn.removeActionListener(clearBtnListener);
         commitBtn.removeActionListener(commitBtnListener);
         squashHistoryBtn.removeActionListener(squashHistoryBtnListener);
+        restartPelletBtn.removeActionListener(restartPelletBtnListener);
         diffManager.removeListener(changeSelectionListener);
     }
 }
