@@ -12,7 +12,7 @@
 
     <groupId>gov.nih.nci</groupId>
     <artifactId>revision-history</artifactId>
-    <version>1.0.5-SNAPSHOT</version>
+    <version>1.0.6-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <name>Prompt</name>
