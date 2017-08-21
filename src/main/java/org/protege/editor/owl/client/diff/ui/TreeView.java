@@ -61,7 +61,10 @@ public class TreeView extends AbstractOWLClassHierarchyViewComponent {
         }
     	List<Change> changesToDisplay = diff.getChangesToDisplay(event);
         Collections.sort(changesToDisplay);
+        boolean setSelected = false;
         for ( Change changeToDisplay : changesToDisplay ) {
+        	if ( setSelected ) 
+        		return;
         	if ( changeToDisplay != null ) {
         		ChangeDetails changeDetails = changeToDisplay.getDetails();
         		OWLObject changeObj = changeDetails.getSubject();
@@ -72,6 +75,7 @@ public class TreeView extends AbstractOWLClassHierarchyViewComponent {
 	    				if (owlEntity.isOWLClass()) {
 							OWLClass subj = owlEntity.asOWLClass();
 							this.getTree().setSelectedOWLObject(subj);
+							setSelected = true;
 	    				}
 	    			}
         		}
