@@ -124,6 +124,7 @@
                     </instructions>
                 </configuration>
                 <executions>
+                <!--
                     <execution>
                         <id>bundle-manifest</id>
                         <phase>install</phase>
@@ -131,6 +132,7 @@
                             <goal>manifest</goal>
                         </goals>
                     </execution>
+                    -->
                 </executions>
             </plugin>
         </plugins>
