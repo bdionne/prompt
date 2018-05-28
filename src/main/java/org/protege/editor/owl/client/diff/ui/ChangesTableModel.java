@@ -1,18 +1,29 @@
 package org.protege.editor.owl.client.diff.ui;
 
 import edu.stanford.protege.metaproject.api.UserId;
+
+import org.protege.editor.owl.OWLEditorKit;
 import org.protege.editor.owl.client.diff.model.Change;
 import org.protege.editor.owl.client.diff.model.ChangeMode;
 import org.protege.editor.owl.client.diff.model.ChangeType;
 import org.protege.editor.owl.client.diff.model.Review;
+import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationValue;
+import org.semanticweb.owlapi.model.OWLClass;
+import org.semanticweb.owlapi.model.OWLEntity;
+import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLObject;
+import org.semanticweb.owlapi.model.OWLOntology;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.semanticweb.owlapi.search.Searcher.annotationObjects;
 
 /**
  * @author Rafael Gonçalves <br>
@@ -21,11 +32,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class ChangesTableModel extends AbstractTableModel {
     private static final long serialVersionUID = 2145701527431928323L;
     private List<Change> changes = new ArrayList<>();
+    private OWLOntology ontology; 
 
     /**
      * No-args constructor
      */
-    public ChangesTableModel() { }
+    public ChangesTableModel(OWLEditorKit editorKit) { 
+    	ontology = editorKit.getOWLModelManager().getActiveOntology();
+    }
 
     public void setChanges(List<Change> changes) {
         this.changes = checkNotNull(changes);
@@ -53,7 +67,13 @@ public class ChangesTableModel extends AbstractTableModel {
             case AUTHOR:
                 return change.getCommitMetadata().getAuthor();
             case CHANGE_SUBJECT:
-                return change.getDetails().getSubject();
+            	OWLObject obj = change.getDetails().getSubject();
+            	if (obj instanceof IRI) {
+            		return getRDFSLabel(getClass((IRI)obj));
+            	} else if (obj instanceof OWLClass) {
+            		return getRDFSLabel((OWLClass)obj);
+            	}
+            	return obj;
             case CHANGE_TYPE:
                 return change.getDetails().getType();
             case REVISION_TAG:
@@ -69,6 +89,29 @@ public class ChangesTableModel extends AbstractTableModel {
         }
     }
 
+    private OWLClass getClass(IRI iri) {
+    	OWLClass cls = null;
+    	Set<OWLEntity> classes = ontology.getEntitiesInSignature(iri);
+		for (OWLEntity et : classes) {
+			cls = et.asOWLClass();
+		}
+		return cls;
+    }
+    
+    private String getRDFSLabel(OWLClass cls) {
+    	String rdfsLabel = null;
+		
+		for (OWLAnnotation annotation : annotationObjects(ontology.getAnnotationAssertionAxioms(cls.getIRI()), ontology.getOWLOntologyManager().getOWLDataFactory()
+				.getRDFSLabel())) {
+			OWLAnnotationValue av = annotation.getValue();
+			com.google.common.base.Optional<OWLLiteral> ol = av.asLiteral();
+			if (ol.isPresent()) {
+				rdfsLabel = ol.get().getLiteral();
+			}
+		}
+    	return rdfsLabel;
+    }
+    
     public Change getChange(int rowIndex) {
         return changes.get(rowIndex);
     }

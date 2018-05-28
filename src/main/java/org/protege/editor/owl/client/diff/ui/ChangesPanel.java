@@ -114,7 +114,7 @@ public class ChangesPanel extends JPanel implements Disposable {
 
     private void createDiffTable() {
         // create diff table model
-        diffTableModel = new ChangesTableModel();
+        diffTableModel = new ChangesTableModel(editorKit);
 
         // create diff table
         table = new ChangesTable(diffTableModel, editorKit);
