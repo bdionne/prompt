@@ -93,12 +93,16 @@ public class ChangesTableModel extends AbstractTableModel {
     	OWLClass cls = null;
     	Set<OWLEntity> classes = ontology.getEntitiesInSignature(iri);
 		for (OWLEntity et : classes) {
-			cls = et.asOWLClass();
+			if (et instanceof OWLClass) {
+				cls = et.asOWLClass();
+			}
 		}
 		return cls;
     }
     
     private String getRDFSLabel(OWLClass cls) {
+    	if (cls == null) 
+    		return "";
     	String rdfsLabel = null;
 		
 		for (OWLAnnotation annotation : annotationObjects(ontology.getAnnotationAssertionAxioms(cls.getIRI()), ontology.getOWLOntologyManager().getOWLDataFactory()
