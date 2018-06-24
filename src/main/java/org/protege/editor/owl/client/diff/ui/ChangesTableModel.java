@@ -9,12 +9,14 @@ import org.protege.editor.owl.client.diff.model.ChangeType;
 import org.protege.editor.owl.client.diff.model.Review;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLAnnotation;
+import org.semanticweb.owlapi.model.OWLAnnotationProperty;
 import org.semanticweb.owlapi.model.OWLAnnotationValue;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLEntity;
 import org.semanticweb.owlapi.model.OWLLiteral;
 import org.semanticweb.owlapi.model.OWLObject;
 import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLProperty;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
@@ -69,7 +71,15 @@ public class ChangesTableModel extends AbstractTableModel {
             case CHANGE_SUBJECT:
             	OWLObject obj = change.getDetails().getSubject();
             	if (obj instanceof IRI) {
-            		return getRDFSLabel(getClass((IRI)obj));
+            		OWLEntity entity = getEntity((IRI)obj);
+            		if (entity != null) {
+	            		if (entity instanceof OWLClass)
+	            			return getRDFSLabel((OWLClass) entity);
+	            		else if (entity instanceof OWLProperty) {
+	            			return ((OWLAnnotationProperty)entity).getIRI().getShortForm();
+	            		}
+            		}
+            		return obj;	
             	} else if (obj instanceof OWLClass) {
             		return getRDFSLabel((OWLClass)obj);
             	}
@@ -88,21 +98,19 @@ public class ChangesTableModel extends AbstractTableModel {
                 throw new IllegalStateException();
         }
     }
-
-    private OWLClass getClass(IRI iri) {
-    	OWLClass cls = null;
+    
+    private OWLEntity getEntity(IRI iri) {
     	Set<OWLEntity> classes = ontology.getEntitiesInSignature(iri);
 		for (OWLEntity et : classes) {
 			if (et instanceof OWLClass) {
-				cls = et.asOWLClass();
+				return et.asOWLClass();
 			}
+			return et;
 		}
-		return cls;
+		return null;
     }
-    
+
     private String getRDFSLabel(OWLClass cls) {
-    	if (cls == null) 
-    		return "";
     	String rdfsLabel = null;
 		
 		for (OWLAnnotation annotation : annotationObjects(ontology.getAnnotationAssertionAxioms(cls.getIRI()), ontology.getOWLOntologyManager().getOWLDataFactory()
