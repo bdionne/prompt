@@ -7,12 +7,16 @@ import org.protege.editor.owl.model.OWLModelManager;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.table.TableStringConverter;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -127,12 +131,27 @@ public class ChangesPanel extends JPanel implements Disposable {
 
         // allow sorting columns (sort initially by the date column)
         TableRowSorter<TableModel> sorter = new TableRowSorter<>(diffTableModel);
+        sorter.setComparator(ChangesTableModel.Column.CHANGE_SUBJECT.ordinal(), new MyComparator<Object>(diffTableModel));
         List<RowSorter.SortKey> sortKeys = new ArrayList<>();
         sortKeys.add(new RowSorter.SortKey(ChangesTableModel.Column.DATE.ordinal(), SortOrder.DESCENDING));
         sorter.setSortKeys(sortKeys);
         table.setRowSorter(sorter);
     }
+    
+    private class MyComparator<Object> implements Comparator<Object> {
+    	
+    	private AbstractTableModel model = null;
 
+    	public MyComparator(AbstractTableModel mod) {
+    		model = mod;
+    	}
+		public int compare(Object o1, Object o2) {
+			// TODO Auto-generated method stub
+			return ((String) o1).compareToIgnoreCase((String) o2);
+		}
+    	
+    };
+    
     private void setColumnsWidth(JTable table, double... values) {
         for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
             TableColumn column = table.getColumnModel().getColumn(i);

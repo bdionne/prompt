@@ -40,7 +40,7 @@ public class ChangesTableModel extends AbstractTableModel {
      * No-args constructor
      */
     public ChangesTableModel(OWLEditorKit editorKit) { 
-    	ontology = editorKit.getOWLModelManager().getActiveOntology();
+    	ontology = editorKit.getOWLModelManager().getActiveOntology();    	
     }
 
     public void setChanges(List<Change> changes) {
@@ -73,17 +73,18 @@ public class ChangesTableModel extends AbstractTableModel {
             	if (obj instanceof IRI) {
             		OWLEntity entity = getEntity((IRI)obj);
             		if (entity != null) {
-	            		if (entity instanceof OWLClass)
-	            			return getRDFSLabel((OWLClass) entity);
-	            		else if (entity instanceof OWLProperty) {
-	            			return ((OWLAnnotationProperty)entity).getIRI().getShortForm();
-	            		}
+            			if (entity instanceof OWLClass)
+            				return getRDFSLabel((OWLClass) entity);
+            			else if (entity instanceof OWLProperty) {
+            				return ((OWLAnnotationProperty)entity).getIRI().getShortForm();
+            			}
             		}
-            		return obj;	
+            		return ((IRI) obj).getShortForm();	
             	} else if (obj instanceof OWLClass) {
             		return getRDFSLabel((OWLClass)obj);
+            	} else if (!(obj instanceof OWLObject)) {
+            		return obj.toString();
             	}
-            	return obj;
             case CHANGE_TYPE:
                 return change.getDetails().getType();
             case REVISION_TAG:
