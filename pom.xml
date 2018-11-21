@@ -12,7 +12,7 @@
 
     <groupId>gov.nih.nci</groupId>
     <artifactId>revision-history</artifactId>
-    <version>1.0.7-SNAPSHOT</version>
+    <version>1.0.8-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
     <name>Prompt</name>
@@ -52,8 +52,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <protege.version>5.1.1-SNAPSHOT</protege.version>
-        <protege-client.version>3.0.0-SNAPSHOT</protege-client.version>
+        <protege.version>5.1.2-SNAPSHOT</protege.version>
+        <protege-client.version>3.0.1-SNAPSHOT</protege-client.version>
         <fasterxml-uuid.version>3.1.3</fasterxml-uuid.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>

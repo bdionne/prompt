@@ -5,6 +5,7 @@ import org.semanticweb.owlapi.model.*;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Rafael Gonçalves <br>
@@ -89,7 +90,7 @@ public class OntologyChangeVisitor implements OWLAxiomVisitor {
 
     @Override
     public void visit(OWLEquivalentObjectPropertiesAxiom axiom) {
-        Set<OWLSubObjectPropertyOfAxiom> subOpAxs = axiom.asSubObjectPropertyOfAxioms();
+        Set<OWLSubObjectPropertyOfAxiom> subOpAxs = axiom.asSubObjectPropertyOfAxioms().stream().collect(Collectors.toSet());
         OWLSubObjectPropertyOfAxiom subOp = subOpAxs.iterator().next();
         setChangeSubjectForPropertyAxiom(subOp);
         changeType = getChangeType(axiom);
@@ -171,7 +172,7 @@ public class OntologyChangeVisitor implements OWLAxiomVisitor {
 
     @Override
     public void visit(OWLEquivalentDataPropertiesAxiom axiom) {
-        Set<OWLSubDataPropertyOfAxiom> subDpAxs = axiom.asSubDataPropertyOfAxioms();
+        Set<OWLSubDataPropertyOfAxiom> subDpAxs = axiom.asSubDataPropertyOfAxioms().stream().collect(Collectors.toSet());
         OWLSubDataPropertyOfAxiom subDp = subDpAxs.iterator().next();
         setChangeSubjectForPropertyAxiom(subDp);
         changeType = getChangeType(axiom);
@@ -185,7 +186,7 @@ public class OntologyChangeVisitor implements OWLAxiomVisitor {
 
     @Override
     public void visit(OWLEquivalentClassesAxiom axiom) {
-        Set<OWLSubClassOfAxiom> subcAxs = axiom.asOWLSubClassOfAxioms();
+        Set<OWLSubClassOfAxiom> subcAxs = axiom.asOWLSubClassOfAxioms().stream().collect(Collectors.toSet());
         OWLSubClassOfAxiom subc = subcAxs.iterator().next();
         if (!subc.getSubClass().isAnonymous()) {
             subject = subc.getSubClass();
@@ -318,7 +319,7 @@ public class OntologyChangeVisitor implements OWLAxiomVisitor {
     }
 
     private OWLObject getChangeSubjectFromNaryAxiom(OWLSubClassOfAxiomSetShortCut axiom) {
-        Set<OWLSubClassOfAxiom> subcAxs = axiom.asOWLSubClassOfAxioms();
+        Set<OWLSubClassOfAxiom> subcAxs = axiom.asOWLSubClassOfAxioms().stream().collect(Collectors.toSet());
         for(OWLSubClassOfAxiom ax : subcAxs) {
             if(!ax.getSubClass().isAnonymous()) {
                 return ax.getSubClass();

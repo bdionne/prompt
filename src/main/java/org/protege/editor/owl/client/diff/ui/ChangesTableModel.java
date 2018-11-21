@@ -22,7 +22,9 @@ import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.semanticweb.owlapi.search.Searcher.annotationObjects;
@@ -114,10 +116,10 @@ public class ChangesTableModel extends AbstractTableModel {
     private String getRDFSLabel(OWLClass cls) {
     	String rdfsLabel = null;
 		
-		for (OWLAnnotation annotation : annotationObjects(ontology.getAnnotationAssertionAxioms(cls.getIRI()), ontology.getOWLOntologyManager().getOWLDataFactory()
-				.getRDFSLabel())) {
+		for (OWLAnnotation annotation : annotationObjects(ontology.getAnnotationAssertionAxioms(cls.getIRI()).stream(), ontology.getOWLOntologyManager().getOWLDataFactory()
+				.getRDFSLabel()).collect(Collectors.toSet())) {
 			OWLAnnotationValue av = annotation.getValue();
-			com.google.common.base.Optional<OWLLiteral> ol = av.asLiteral();
+			Optional<OWLLiteral> ol = av.asLiteral();
 			if (ol.isPresent()) {
 				rdfsLabel = ol.get().getLiteral();
 			}
