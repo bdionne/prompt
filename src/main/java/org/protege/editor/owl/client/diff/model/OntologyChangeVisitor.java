@@ -1,7 +1,9 @@
 package org.protege.editor.owl.client.diff.model;
 
-import org.apache.log4j.Logger;
+//import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.Set;
@@ -12,7 +14,7 @@ import java.util.stream.Collectors;
  * Stanford Center for Biomedical Informatics Research
  */
 public class OntologyChangeVisitor implements OWLAxiomVisitor {
-    private static final Logger log = Logger.getLogger(OntologyChangeVisitor.class);
+    private static final Logger log = LoggerFactory.getLogger(OntologyChangeVisitor.class);
 
     private OWLObject subject, property;
     private String object;
