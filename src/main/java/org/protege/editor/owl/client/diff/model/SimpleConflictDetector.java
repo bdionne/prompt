@@ -2,9 +2,11 @@ package org.protege.editor.owl.client.diff.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.apache.log4j.Logger;
+//import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntologyChange;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -15,7 +17,7 @@ import java.util.Set;
  * Stanford Center for Biomedical Informatics Research
  */
 public final class SimpleConflictDetector implements ConflictDetector {
-    private static final Logger log = Logger.getLogger(SimpleConflictDetector.class);
+    private static final Logger log = LoggerFactory.getLogger(SimpleConflictDetector.class);
     private static final Strategy DEFAULT_STRATEGY = Strategy.SAME_TYPE_AND_ANNOTATION_PROPERTY;
 
     /**
