@@ -184,7 +184,7 @@ public class ReviewButtonsPanel extends JPanel implements Disposable {
                     try {
 						ServerDocument serverDocument = client.openProject(projectId).serverDocument;
 						VersionedOWLOntology vont = client.buildVersionedOntology(
-			                    serverDocument, manager, projectId);
+			                    serverDocument, manager, projectId, editorKit);
 						clientSession.setActiveProject(projectId, vont);
 					} catch (AuthorizationException | ClientRequestException e) {
 						throw new ExecutionException(e);
